@@ -31,4 +31,12 @@
 *.out
 *.app
 
+# for vc++
 *.db
+*.tlog
+*.CopyComplete
+*.idb
+*.opendb
+Debug/
+packages/
+.vs/
