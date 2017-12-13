@@ -20,8 +20,9 @@ void Board::AddNode(const BoardID& id, const std::string & letter)
 	if (IsALetter(letter))
 	{
 		BoardNodes node;
-		std::locale loc;
-		node.cLetter = std::tolower(letter[0], loc);
+		std::string cLetter = letter;
+		std::transform(cLetter.begin(), cLetter.end(), cLetter.begin(), tolower);
+		node.cLetter = cLetter;
 		node.neighborsList.clear();
 		auto result = nodesMap.insert(std::make_pair(id, node));
 		if (false == result.second)
@@ -76,6 +77,117 @@ void Board::FileToBoard(const std::string & boardFilePath)
 	}
 
 	boardFile.close();
+}
+
+bool Board::CheckForWord(const std::string & word)
+{
+	std::string tempWord = word;
+	tempWord.replace(tempWord.find("qu"), tempWord.length(), "q");
+
+	for (auto nodesMapIter = nodesMap.begin(); nodesMapIter != nodesMap.end(); nodesMapIter++)
+	{
+		auto TempNode = nodesMapIter->first;
+		std::deque<BoardID> queue;
+		queue.push_back(TempNode);
+		std::list<BoardID> path, neighbors;
+
+		while (queue.size() > 0)
+		{
+			auto id = queue.front();
+			queue.pop_front();
+			BoardNodes node;
+			if (!GetNode(id, node))
+			{
+				std::cout << "can not find this id, first: " << id.first << " second: "
+					<< id.second << std::endl;
+				break;
+			}
+
+			if (node.cLetter.at(0) == tempWord.at(path.size()))  // cLetter just one char
+			{
+				auto pathIter = std::find(path.begin(), path.end(), id);
+				if (pathIter == path.end()) continue;
+
+				path.push_back(id);
+				if (tempWord.length() == path.size()) return true;
+
+				if (!GetNeighbors(id, neighbors))
+				{
+					std::cout << "GetNeighbors can not find this id, first: " << id.first << " second: "
+						<< id.second << std::endl;
+				}
+
+				path.insert(path.end(), neighbors.begin(), neighbors.end());
+			}
+			else if (neighbors.size() > 0)
+			{
+				neighbors.pop_front();
+			}
+
+			if (neighbors.size() == 0 && path.size() > 0)
+			{
+				auto bad_id = path.front();
+				path.pop_front();
+				queue.clear();
+
+				if (!GetNeighbors(path.back(), neighbors))
+				{
+					std::cout << "get neighbors failed, first: " << path.back().first
+						<< " second: " << path.back().second << std::endl;
+				}
+				for (auto oneNeighbor : neighbors)
+				{
+					queue.push_back(oneNeighbor);
+					auto delID = std::find(queue.begin(), queue.end(), bad_id);
+					if (delID != queue.end())
+					{
+						queue.erase(delID);
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool Board::GetNeighbors(const BoardID& id, std::list<BoardID>& neighorsNode)
+{
+	BoardNodes boardNode ;
+	if (!GetNode(id, boardNode))
+	{
+		std::cout << "can not find this id, first : " << id.first
+			<< " second : " << id.second << std::endl;
+		return false;
+	}
+
+	for (auto oneNeighbor : boardNode.neighborsList)
+	{
+		neighorsNode.push_back(oneNeighbor.first);
+	}
+
+	return true;
+}
+
+ bool Board::GetNode(const BoardID & id, BoardNodes& boardNodes)
+{
+	auto boardNode = nodesMap.find(id);
+	if (boardNode != nodesMap.end())
+	{
+		boardNodes = boardNode->second;
+		return true;
+	}
+	else
+	{
+		std::cout << "can not find this id, first : " << id.first
+			<< " second : " << id.second << std::endl;
+		return false;
+	}
+}
+
+bool Board::GetNodes(std::map<BoardID, BoardNodes>& nodesMap)
+{
+	nodesMap = this->nodesMap;
+	return true;
 }
 
 void Board::AddNeighbors(const BoardID & id)

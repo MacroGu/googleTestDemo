@@ -6,10 +6,11 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <queue>
 #include <tuple>
-#include <algorithm>
+#include <algorithm>     // transform
+#include <set>
 #include <type_traits>
-#include <locale>         // std::locale, std::tolower
 #include <sstream>
 #include <iterator>
 #include <stdint.h>
@@ -56,6 +57,12 @@ public:
 	void AddNode(const BoardID& id, const std::string& letter);
 	// change to matrix
 	void FileToBoard(const std::string& boardFilePath);
+	bool CheckForWord(const std::string& word);
+
+	// just get the key of the neighbors 
+	bool GetNeighbors(const BoardID& id, std::list<BoardID>& neighorsNode);
+	bool GetNode(const BoardID& id, BoardNodes& boardNodes);
+	bool GetNodes(std::map<BoardID, BoardNodes>& nodesMap);
 private:
 	
 	FRIEND_TEST(BoogleUnitTest, TestAddNeighbors);
@@ -71,4 +78,3 @@ private:
 	FRIEND_TEST(BoogleUnitTest, TestTupleInBoard);
 	std::tuple<int32_t, int32_t, int32_t> RANGE_TO_NEIGHBORS;
 };
-
