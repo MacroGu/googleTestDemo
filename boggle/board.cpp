@@ -82,14 +82,22 @@ void Board::FileToBoard(const std::string & boardFilePath)
 bool Board::CheckForWord(const std::string & word)
 {
 	std::string tempWord = word;
-	tempWord.replace(tempWord.find("qu"), tempWord.length(), "q");
+	while (tempWord.find("qu") != std::string::npos)
+	{
+		tempWord.replace(tempWord.find("qu"), strlen("qu"), "q");
+	}
+
+	if (word == "list")
+	{
+		std::cout << std::endl;
+	}
 
 	for (auto nodesMapIter = nodesMap.begin(); nodesMapIter != nodesMap.end(); nodesMapIter++)
 	{
-		auto TempNode = nodesMapIter->first;
 		std::deque<BoardID> queue;
-		queue.push_back(TempNode);
 		std::list<BoardID> path, neighbors;
+		auto TempNode = nodesMapIter->first;
+		queue.push_back(TempNode);
 
 		while (queue.size() > 0)
 		{
@@ -106,44 +114,52 @@ bool Board::CheckForWord(const std::string & word)
 			if (node.cLetter.at(0) == tempWord.at(path.size()))  // cLetter just one char
 			{
 				auto pathIter = std::find(path.begin(), path.end(), id);
-				if (pathIter == path.end()) continue;
+				if (pathIter != path.end()) continue;   // means this char in path
 
 				path.push_back(id);
-				if (tempWord.length() == path.size()) return true;
+				if (tempWord.length() == path.size()) 
+					return true;
 
 				if (!GetNeighbors(id, neighbors))
 				{
 					std::cout << "GetNeighbors can not find this id, first: " << id.first << " second: "
 						<< id.second << std::endl;
 				}
-
-				path.insert(path.end(), neighbors.begin(), neighbors.end());
+				
+				for (auto oneNeighbors : neighbors)
+				{
+					queue.push_front(oneNeighbors);
+				}
 			}
 			else if (neighbors.size() > 0)
 			{
-				neighbors.pop_front();
+				neighbors.pop_back();
 			}
 
 			if (neighbors.size() == 0 && path.size() > 0)
 			{
-				auto bad_id = path.front();
-				path.pop_front();
+				auto bad_id = path.back();
+				path.pop_back();
 				queue.clear();
 
-				if (!GetNeighbors(path.back(), neighbors))
+				if (path.size() > 0)
 				{
-					std::cout << "get neighbors failed, first: " << path.back().first
-						<< " second: " << path.back().second << std::endl;
-				}
-				for (auto oneNeighbor : neighbors)
-				{
-					queue.push_back(oneNeighbor);
+					if (!GetNeighbors(path.back(), neighbors))
+					{
+						std::cout << "get neighbors failed, first: " << path.back().first
+							<< " second: " << path.back().second << std::endl;
+					}
+					for (auto oneNeighbor : neighbors)
+					{
+						queue.push_front(oneNeighbor);
+					}
 					auto delID = std::find(queue.begin(), queue.end(), bad_id);
 					if (delID != queue.end())
 					{
 						queue.erase(delID);
 					}
 				}
+
 			}
 		}
 	}
@@ -152,6 +168,8 @@ bool Board::CheckForWord(const std::string & word)
 
 bool Board::GetNeighbors(const BoardID& id, std::list<BoardID>& neighorsNode)
 {
+
+	neighorsNode.clear();
 	BoardNodes boardNode ;
 	if (!GetNode(id, boardNode))
 	{

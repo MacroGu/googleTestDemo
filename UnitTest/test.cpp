@@ -42,13 +42,49 @@ TEST(BoogleUnitTest, TestTupleInBoard)
 
 TEST(BoogleUnitTest, TestFileToBoard)
 {
-	std::string str = "This is a string";
-    std::istringstream buf(str);
-    std::istream_iterator<std::string> beg(buf), end;
-	std::vector<std::string> tokens(beg, end); // done!
 
-    for(auto& s: tokens)
-        TEST_COUT << s << std::endl;
-// TEST_COUT << "Hello world" << std::endl;
+   // for(auto& s: tokens)
+	// TEST_COUT << "Hello world" << std::endl;
+
+		/*
+		P W Y R
+		E N T H
+		G S I Q
+		O L S A
+	*/
+
+
+
+	std::vector<std::vector<std::string>> boardFile =
+	{ {"P", "W", "Y", "R"}, {"E", "N", "T", "H"},
+	{"G", "S", "I", "Q"},{"O", "L", "S", "A"} };
+
+	Board board;
+	board.FileToBoard("D:\\random\\board_1.txt");
+	std::map<BoardID, BoardNodes> nodesMap;
+	if (!board.GetNodes(nodesMap))
+	{
+		//EXPECT_TRUE(false);
+	}
+
+	int i = 0;
+	int j = 0;
+	for (auto nodesMapIter : nodesMap)
+	{
+		std::transform(boardFile[i][j].begin(), boardFile[i][j].end(), 
+			boardFile[i][j].begin(), tolower);
+		EXPECT_EQ(boardFile[i][j], nodesMapIter.second.cLetter);
+		j++;
+		if (j == 4)
+		{
+			j = 0;
+			i++;
+		}
+		if (i == 4)
+		{
+		//	break;
+		}
+	}
 
 }
+
