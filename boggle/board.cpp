@@ -4,9 +4,9 @@
 
 Board::Board()
 {
-	std::get<0>(RANGE_TO_NEIGHBORS) = -1;
-	std::get<1>(RANGE_TO_NEIGHBORS) = 0;
-	std::get<2>(RANGE_TO_NEIGHBORS) = 1;
+	std::get<0>(NEIGHBORS_RANGE) = -1;
+	std::get<1>(NEIGHBORS_RANGE) = 0;
+	std::get<2>(NEIGHBORS_RANGE) = 1;
 }
 
 
@@ -17,6 +17,12 @@ Board::~Board()
 
 void Board::AddNode(const BoardID& id, const std::string & letter)
 {
+	if (!&id)
+	{
+		std::cout << "error id is null " << std::endl;
+		return;
+	}
+
 	if (IsALetter(letter))
 	{
 		BoardNodes node;
@@ -29,6 +35,7 @@ void Board::AddNode(const BoardID& id, const std::string & letter)
 		{
 			std::cout << "insert value failed id first: " << id.first
 			<< " ,second: " << id.second << " , letter: " << letter << std::endl;
+			return;
 		}
 
 		AddNeighbors(id);
@@ -87,11 +94,6 @@ bool Board::CheckForWord(const std::string & word)
 		tempWord.replace(tempWord.find("qu"), strlen("qu"), "q");
 	}
 
-	if (word == "list")
-	{
-		std::cout << std::endl;
-	}
-
 	for (auto nodesMapIter = nodesMap.begin(); nodesMapIter != nodesMap.end(); nodesMapIter++)
 	{
 		std::deque<BoardID> queue;
@@ -113,8 +115,7 @@ bool Board::CheckForWord(const std::string & word)
 
 			if (node.cLetter.at(0) == tempWord.at(path.size()))  // cLetter just one char
 			{
-				auto pathIter = std::find(path.begin(), path.end(), id);
-				if (pathIter != path.end()) continue;   // means this char in path
+				if (std::find(path.begin(), path.end(), id) != path.end()) continue;   // means this char in path
 
 				path.push_back(id);
 				if (tempWord.length() == path.size()) 
@@ -125,11 +126,8 @@ bool Board::CheckForWord(const std::string & word)
 					std::cout << "GetNeighbors can not find this id, first: " << id.first << " second: "
 						<< id.second << std::endl;
 				}
-				
-				for (auto oneNeighbors : neighbors)
-				{
-					queue.push_front(oneNeighbors);
-				}
+
+				queue.insert(queue.begin(), neighbors.crbegin(), neighbors.crend());
 			}
 			else if (neighbors.size() > 0)
 			{
@@ -149,25 +147,27 @@ bool Board::CheckForWord(const std::string & word)
 						std::cout << "get neighbors failed, first: " << path.back().first
 							<< " second: " << path.back().second << std::endl;
 					}
-					for (auto oneNeighbor : neighbors)
-					{
-						queue.push_front(oneNeighbor);
-					}
+					queue.insert(queue.begin(), neighbors.crbegin(), neighbors.crend());
 					auto delID = std::find(queue.begin(), queue.end(), bad_id);
 					if (delID != queue.end())
 					{
 						queue.erase(delID);
 					}
 				}
-
 			}
 		}
 	}
+
 	return false;
 }
 
 bool Board::GetNeighbors(const BoardID& id, std::list<BoardID>& neighorsNode)
 {
+	if (!&id)
+	{
+		std::cout << "id is null " << std::endl;
+		return false;
+	}
 
 	neighorsNode.clear();
 	BoardNodes boardNode ;
@@ -178,16 +178,21 @@ bool Board::GetNeighbors(const BoardID& id, std::list<BoardID>& neighorsNode)
 		return false;
 	}
 
-	for (auto oneNeighbor : boardNode.neighborsList)
-	{
-		neighorsNode.push_back(oneNeighbor.first);
-	}
+	std::for_each(boardNode.neighborsList.begin(), 
+		boardNode.neighborsList.end(), 
+		[&](const auto& oneNeighbor) { neighorsNode.push_back(oneNeighbor.first);});
 
 	return true;
 }
 
  bool Board::GetNode(const BoardID & id, BoardNodes& boardNodes)
 {
+	if (!&id)
+	{
+		std::cout << "id is null " << std::endl;
+		return false;
+	}
+
 	auto boardNode = nodesMap.find(id);
 	if (boardNode != nodesMap.end())
 	{
@@ -210,6 +215,12 @@ bool Board::GetNodes(std::map<BoardID, BoardNodes>& nodesMap)
 
 void Board::AddNeighbors(const BoardID & id)
 {
+	if (!&id)
+	{
+		std::cout << "error id is null " << std::endl;
+		return;
+	}
+
 	auto owner = nodesMap.find(id);
 	if (owner == nodesMap.end())
 	{
@@ -218,10 +229,10 @@ void Board::AddNeighbors(const BoardID & id)
 		return;
 	}
 
-	for_each(RANGE_TO_NEIGHBORS, [&](const auto& i) 
+	for_each(NEIGHBORS_RANGE, [&](const auto& i) 
 	{
 		int32_t r = i + id.first;
-		for_each(RANGE_TO_NEIGHBORS, [&](const auto& j) 
+		for_each(NEIGHBORS_RANGE, [&](const auto& j) 
 		{
 			int32_t c = j + id.second;
 			if (BoardID(r, c) != id)
@@ -229,7 +240,7 @@ void Board::AddNeighbors(const BoardID & id)
 				auto neighbor = nodesMap.find(BoardID(r, c));
 				if (neighbor != nodesMap.end())
 				{
-					// todo... check if it still available
+					// merge repeat, if not exist, create it
 					owner->second.neighborsList[BoardID(r, c)] = 1;
 					neighbor->second.neighborsList[id] = 1;
 				}

@@ -76,5 +76,5 @@ private:
 	std::map<BoardID, BoardNodes> nodesMap;
 	// to get neighbors
 	FRIEND_TEST(BoogleUnitTest, TestTupleInBoard);
-	std::tuple<int32_t, int32_t, int32_t> RANGE_TO_NEIGHBORS;
+	std::tuple<int32_t, int32_t, int32_t> NEIGHBORS_RANGE;
 };
